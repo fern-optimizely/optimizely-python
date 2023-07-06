@@ -23,7 +23,7 @@ optimizely_client = Optimizely(
   token="API_TOKEN"
 )
 
-response = optimizely_client.chat_completion()
+response = optimizely_client.models.get()
 
 print(response)
 ```
@@ -41,7 +41,7 @@ optimizely_client = Optimizely(
 )
 
 async def get_response() -> None:
-    response = optimizely_client.chat_completion()
+    response = optimizely_client.models.get()
     print(response)
 
 asyncio.run(get_response())
@@ -67,7 +67,7 @@ from optimizely.core import ApiError
 from optimizely import BadRequestError
 
 try:
-  optimizely_client.chat_completion(...)
+  optimizely_client.models.get()
 except BadRequestError as e: 
   # handle bad request error
 except APIError as e:  
