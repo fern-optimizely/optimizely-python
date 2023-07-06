@@ -83,7 +83,6 @@ Error codes are as followed:
 | 403         | `ForbiddenError`           |
 | 404         | `NotFoundError`            |
 | 422         | `UnprocessableEntityError` |
-| 429         | `TooManyRequestsError`     |
 
 ## Beta status
 
