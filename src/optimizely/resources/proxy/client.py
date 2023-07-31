@@ -4,24 +4,40 @@ import typing
 import urllib.parse
 from json.decoder import JSONDecodeError
 
-import httpx
 import pydantic
 
 from ...core.api_error import ApiError
+from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...core.jsonable_encoder import jsonable_encoder
 from ...errors.unprocessable_entity_error import UnprocessableEntityError
 from ...types.http_validation_error import HttpValidationError
 
+# this is used as the default value for optional parameters
+OMIT = typing.cast(typing.Any, ...)
+
 
 class ProxyClient:
-    def __init__(self, *, environment: str):
+    def __init__(self, *, environment: str, client_wrapper: SyncClientWrapper):
         self._environment = environment
+        self._client_wrapper = client_wrapper
 
     def azure_openai(self, path: str, *, request: typing.Dict[str, typing.Any]) -> typing.Any:
-        _response = httpx.request(
+        """
+        Proxy requests to Azure OpenAI REST API path /openai/{path},
+        see [Azure OpenAI API reference](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference).
+
+        **Note:** The request is forwarded to a random backend, some deployments are not available in all backends.
+
+        Parameters:
+            - path: str.
+
+            - request: typing.Dict[str, typing.Any].
+        """
+        _response = self._client_wrapper.httpx_client.request(
             "POST",
             urllib.parse.urljoin(f"{self._environment}/", f"api/raw/openai/{path}"),
             json=jsonable_encoder(request),
+            headers=self._client_wrapper.get_headers(),
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
@@ -35,10 +51,22 @@ class ProxyClient:
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     def openai(self, path: str, *, request: typing.Dict[str, typing.Any]) -> typing.Any:
-        _response = httpx.request(
+        """
+        Proxy requests to Azure OpenAI REST API path /openai/{path},
+        see [Azure OpenAI API reference](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference).
+
+        **Note:** The request is forwarded to a random backend, some deployments are not available in all backends.
+
+        Parameters:
+            - path: str.
+
+            - request: typing.Dict[str, typing.Any].
+        """
+        _response = self._client_wrapper.httpx_client.request(
             "PUT",
             urllib.parse.urljoin(f"{self._environment}/", f"api/raw/openai/{path}"),
             json=jsonable_encoder(request),
+            headers=self._client_wrapper.get_headers(),
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
@@ -53,17 +81,29 @@ class ProxyClient:
 
 
 class AsyncProxyClient:
-    def __init__(self, *, environment: str):
+    def __init__(self, *, environment: str, client_wrapper: AsyncClientWrapper):
         self._environment = environment
+        self._client_wrapper = client_wrapper
 
     async def azure_openai(self, path: str, *, request: typing.Dict[str, typing.Any]) -> typing.Any:
-        async with httpx.AsyncClient() as _client:
-            _response = await _client.request(
-                "POST",
-                urllib.parse.urljoin(f"{self._environment}/", f"api/raw/openai/{path}"),
-                json=jsonable_encoder(request),
-                timeout=60,
-            )
+        """
+        Proxy requests to Azure OpenAI REST API path /openai/{path},
+        see [Azure OpenAI API reference](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference).
+
+        **Note:** The request is forwarded to a random backend, some deployments are not available in all backends.
+
+        Parameters:
+            - path: str.
+
+            - request: typing.Dict[str, typing.Any].
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "POST",
+            urllib.parse.urljoin(f"{self._environment}/", f"api/raw/openai/{path}"),
+            json=jsonable_encoder(request),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(typing.Any, _response.json())  # type: ignore
         if _response.status_code == 422:
@@ -75,13 +115,24 @@ class AsyncProxyClient:
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     async def openai(self, path: str, *, request: typing.Dict[str, typing.Any]) -> typing.Any:
-        async with httpx.AsyncClient() as _client:
-            _response = await _client.request(
-                "PUT",
-                urllib.parse.urljoin(f"{self._environment}/", f"api/raw/openai/{path}"),
-                json=jsonable_encoder(request),
-                timeout=60,
-            )
+        """
+        Proxy requests to Azure OpenAI REST API path /openai/{path},
+        see [Azure OpenAI API reference](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference).
+
+        **Note:** The request is forwarded to a random backend, some deployments are not available in all backends.
+
+        Parameters:
+            - path: str.
+
+            - request: typing.Dict[str, typing.Any].
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "PUT",
+            urllib.parse.urljoin(f"{self._environment}/", f"api/raw/openai/{path}"),
+            json=jsonable_encoder(request),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(typing.Any, _response.json())  # type: ignore
         if _response.status_code == 422:

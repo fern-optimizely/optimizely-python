@@ -4,10 +4,10 @@ import typing
 import urllib.parse
 from json.decoder import JSONDecodeError
 
-import httpx
 import pydantic
 
 from ...core.api_error import ApiError
+from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...errors.unprocessable_entity_error import UnprocessableEntityError
 from ...types.http_validation_error import HttpValidationError
 from ...types.model_dto import ModelDto
@@ -15,11 +15,17 @@ from ...types.models_response_dto import ModelsResponseDto
 
 
 class ModelsClient:
-    def __init__(self, *, environment: str):
+    def __init__(self, *, environment: str, client_wrapper: SyncClientWrapper):
         self._environment = environment
+        self._client_wrapper = client_wrapper
 
     def get(self) -> ModelsResponseDto:
-        _response = httpx.request("GET", urllib.parse.urljoin(f"{self._environment}/", "api/models"), timeout=60)
+        _response = self._client_wrapper.httpx_client.request(
+            "GET",
+            urllib.parse.urljoin(f"{self._environment}/", "api/models"),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(ModelsResponseDto, _response.json())  # type: ignore
         try:
@@ -29,7 +35,16 @@ class ModelsClient:
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     def get_by_name(self, name: typing.Any) -> ModelDto:
-        _response = httpx.request("GET", urllib.parse.urljoin(f"{self._environment}/", f"api/model/{name}"), timeout=60)
+        """
+        Parameters:
+            - name: typing.Any.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "GET",
+            urllib.parse.urljoin(f"{self._environment}/", f"api/model/{name}"),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(ModelDto, _response.json())  # type: ignore
         if _response.status_code == 422:
@@ -42,14 +57,17 @@ class ModelsClient:
 
 
 class AsyncModelsClient:
-    def __init__(self, *, environment: str):
+    def __init__(self, *, environment: str, client_wrapper: AsyncClientWrapper):
         self._environment = environment
+        self._client_wrapper = client_wrapper
 
     async def get(self) -> ModelsResponseDto:
-        async with httpx.AsyncClient() as _client:
-            _response = await _client.request(
-                "GET", urllib.parse.urljoin(f"{self._environment}/", "api/models"), timeout=60
-            )
+        _response = await self._client_wrapper.httpx_client.request(
+            "GET",
+            urllib.parse.urljoin(f"{self._environment}/", "api/models"),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(ModelsResponseDto, _response.json())  # type: ignore
         try:
@@ -59,10 +77,16 @@ class AsyncModelsClient:
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     async def get_by_name(self, name: typing.Any) -> ModelDto:
-        async with httpx.AsyncClient() as _client:
-            _response = await _client.request(
-                "GET", urllib.parse.urljoin(f"{self._environment}/", f"api/model/{name}"), timeout=60
-            )
+        """
+        Parameters:
+            - name: typing.Any.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "GET",
+            urllib.parse.urljoin(f"{self._environment}/", f"api/model/{name}"),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(ModelDto, _response.json())  # type: ignore
         if _response.status_code == 422:
