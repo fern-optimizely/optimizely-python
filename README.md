@@ -1,3 +1,4 @@
+WARNING: This is not the supported Eleanor SDK. Please use https://github.com/optimizely/python-optiai
 
 # Optimizely Python Library
 
